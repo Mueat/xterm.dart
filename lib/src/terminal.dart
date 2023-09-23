@@ -229,6 +229,12 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     notifyListeners();
   }
 
+  bool showCursor = true;
+  void notifyCursorBlink() {
+    showCursor = !showCursor;
+    notifyListeners();
+  }
+
   /// Sends a key event to the underlying program.
   ///
   /// See also:
@@ -452,6 +458,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   @override
   void index() {
+    print(_buffer.lines.toList().last);
     _buffer.index();
   }
 

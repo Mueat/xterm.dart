@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -166,6 +168,8 @@ class TerminalViewState extends State<TerminalView> {
 
   late ScrollController _scrollController;
 
+  Timer? _coursorBlinkTimer;
+
   RenderTerminal get renderTerminal =>
       _viewportKey.currentContext!.findRenderObject() as RenderTerminal;
 
@@ -177,7 +181,23 @@ class TerminalViewState extends State<TerminalView> {
     _shortcutManager = ShortcutManager(
       shortcuts: widget.shortcuts ?? defaultTerminalShortcuts,
     );
+    if (widget.terminal.cursorBlinkMode) {
+      _focusNode.addListener(setBlink);
+    }
+
     super.initState();
+  }
+
+  void setBlink() {
+    if (_focusNode.hasFocus) {
+      _coursorBlinkTimer = Timer.periodic(Duration(milliseconds: 500), (timer) {
+        if (_focusNode.hasFocus && mounted) {
+          widget.terminal.notifyCursorBlink();
+        }
+      });
+    } else if (_coursorBlinkTimer != null) {
+      _coursorBlinkTimer!.cancel();
+    }
   }
 
   @override
@@ -206,6 +226,9 @@ class TerminalViewState extends State<TerminalView> {
 
   @override
   void dispose() {
+    if (widget.terminal.cursorBlinkMode && _focusNode.hasListeners) {
+      _focusNode.removeListener(setBlink);
+    }
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
@@ -216,6 +239,9 @@ class TerminalViewState extends State<TerminalView> {
       _scrollController.dispose();
     }
     _shortcutManager.dispose();
+    if (_coursorBlinkTimer != null) {
+      _coursorBlinkTimer!.cancel();
+    }
     super.dispose();
   }
 
@@ -225,24 +251,37 @@ class TerminalViewState extends State<TerminalView> {
       key: _scrollableKey,
       controller: _scrollController,
       viewportBuilder: (context, offset) {
-        return _TerminalView(
-          key: _viewportKey,
-          terminal: widget.terminal,
-          controller: _controller,
-          offset: offset,
-          padding: MediaQuery.of(context).padding,
-          autoResize: widget.autoResize,
-          textStyle: widget.textStyle,
-          textScaleFactor:
-              widget.textScaleFactor ?? MediaQuery.textScaleFactorOf(context),
-          theme: widget.theme,
-          focusNode: _focusNode,
-          cursorType: widget.cursorType,
-          alwaysShowCursor: widget.alwaysShowCursor,
-          onEditableRect: _onEditableRect,
-          composingText: _composingText,
+        print("build ${widget.textStyle.fontSize}");
+        return Container(
+          padding: EdgeInsets.only(right: 15),
+          child: _TerminalView(
+            key: _viewportKey,
+            terminal: widget.terminal,
+            controller: _controller,
+            offset: offset,
+            padding: MediaQuery.of(context).padding,
+            autoResize: widget.autoResize,
+            textStyle: widget.textStyle,
+            textScaleFactor:
+                widget.textScaleFactor ?? MediaQuery.textScaleFactorOf(context),
+            theme: widget.theme,
+            focusNode: _focusNode,
+            cursorType: widget.cursorType,
+            alwaysShowCursor: widget.alwaysShowCursor,
+            onEditableRect: _onEditableRect,
+            composingText: _composingText,
+          ),
         );
       },
+    );
+
+    child = ScrollbarTheme(
+      data: ScrollbarThemeData(
+        thumbColor: MaterialStateProperty.all(widget.theme.foreground),
+        radius: Radius.circular(20),
+        thickness: MaterialStateProperty.all(5),
+      ),
+      child: child,
     );
 
     child = TerminalScrollGestureHandler(
@@ -319,11 +358,11 @@ class TerminalViewState extends State<TerminalView> {
     );
 
     child = Container(
-      color: widget.theme.background.withOpacity(widget.backgroundOpacity),
-      padding: widget.padding,
+      // color: widget.theme.background.withOpacity(widget.backgroundOpacity),
+      // padding: widget.padding,
+      // padding: EdgeInsets.only(right: 15),
       child: child,
     );
-
     return child;
   }
 
