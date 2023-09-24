@@ -6,7 +6,7 @@ import 'package:zmodem/zmodem.dart';
 
 export 'package:zmodem/zmodem.dart' show ZModemFileInfo;
 
-typedef ZModemInputHandler = void Function(String output);
+typedef ZModemInputHandler = void Function(List<int> output);
 
 typedef ZModemOfferHandler = void Function(ZModemOffer offer);
 
@@ -75,9 +75,7 @@ class ZModemMux {
       // onPause: _stdoutSubscription.pause,
       // onResume: _stdoutSubscription.resume,
       )
-    ..stream
-        .transform(Utf8Decoder(allowMalformed: true))
-        .listen(onTerminalInput);
+    ..stream.listen(onTerminalInput);
 
   /// Current ZModem session. If null, no session is active.
   ZModemCore? _session;
@@ -91,9 +89,9 @@ class ZModemMux {
 
   /// Writes terminal output to the underlying connection. [input] may be
   /// buffered if a ZModem session is active.
-  void terminalWrite(String input) {
+  void terminalWrite(Uint8List input) {
     if (_session == null) {
-      stdin.add(utf8.encode(input) as Uint8List);
+      stdin.add(input);
     }
   }
 
