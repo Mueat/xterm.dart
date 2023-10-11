@@ -61,6 +61,11 @@ class _SuggestionPortalState extends State<SuggestionPortal> {
       child: widget.child,
     );
   }
+
+  @override
+  void deactivate() {
+    super.deactivate();
+  }
 }
 
 /// A widget that places [child] around [cursorRect].

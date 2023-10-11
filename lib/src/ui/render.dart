@@ -364,9 +364,19 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     return _composingText != null && _composingText!.isNotEmpty;
   }
 
+  bool _blinkCursorShow = true;
+
+  void blinkCursor() {
+    _blinkCursorShow = !_blinkCursorShow;
+    markNeedsLayout();
+  }
+
   bool get _shouldShowCursor {
+    if (!_focusNode.hasFocus) {
+      return true;
+    }
     if (_terminal.cursorBlinkMode) {
-      return _terminal.showCursor;
+      return _blinkCursorShow;
     }
     return _terminal.cursorVisibleMode || _alwaysShowCursor || _isComposingText;
   }

@@ -182,22 +182,16 @@ class TerminalViewState extends State<TerminalView> {
       shortcuts: widget.shortcuts ?? defaultTerminalShortcuts,
     );
     if (widget.terminal.cursorBlinkMode) {
-      _focusNode.addListener(setBlink);
+      _coursorBlinkTimer = Timer.periodic(Duration(milliseconds: 500), (timer) {
+        if (mounted &&
+            _focusNode.hasFocus &&
+            _viewportKey.currentContext != null) {
+          renderTerminal.blinkCursor();
+        }
+      });
     }
 
     super.initState();
-  }
-
-  void setBlink() {
-    if (_focusNode.hasFocus) {
-      _coursorBlinkTimer = Timer.periodic(Duration(milliseconds: 500), (timer) {
-        if (_focusNode.hasFocus && mounted) {
-          widget.terminal.notifyCursorBlink();
-        }
-      });
-    } else if (_coursorBlinkTimer != null) {
-      _coursorBlinkTimer!.cancel();
-    }
   }
 
   @override
@@ -226,9 +220,7 @@ class TerminalViewState extends State<TerminalView> {
 
   @override
   void dispose() {
-    if (widget.terminal.cursorBlinkMode && _focusNode.hasListeners) {
-      _focusNode.removeListener(setBlink);
-    }
+    _coursorBlinkTimer?.cancel();
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
@@ -251,7 +243,6 @@ class TerminalViewState extends State<TerminalView> {
       key: _scrollableKey,
       controller: _scrollController,
       viewportBuilder: (context, offset) {
-        print("build ${widget.textStyle.fontSize}");
         return Container(
           padding: EdgeInsets.only(right: 15),
           child: _TerminalView(
