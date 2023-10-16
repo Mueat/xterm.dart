@@ -81,11 +81,11 @@ class _MyHomePageState extends State<MyHomePage> {
       stdout: session.stdout,
     );
 
-    mux.onTerminalInput = terminal.write;
+    // mux.onTerminalInput = terminal.write;
     mux.onFileOffer = _handleFileOffer;
     mux.onFileRequest = _handleFileRequest;
 
-    terminal.onOutput = mux.terminalWrite;
+    // terminal.onOutput = mux.terminalWrite;
   }
 
   void _handleFileOffer(ZModemOffer offer) async {
